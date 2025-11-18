@@ -103,7 +103,7 @@ exports.updateProfile = async (req, res) => {
       bio
     };
     if (req.file) {
-      updatedData.profile_image = req.file.path; 
+      updatedData.profile_image = `/uploads/${req.file.filename}`; 
     }
 
     const user = await User.findByIdAndUpdate(
