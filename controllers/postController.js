@@ -4,7 +4,7 @@ const Post = require("../models/Post");
 exports.createPost = async (req, res) => {
   try {
     const { caption } = req.body;
-    const image = req.file ? req.file.path : null; // if using multer for image upload
+    const image = req.file ? `/uploads/${req.file.filename}` : null; 
 
     const post = await Post.create({
       user: req.user._id,
