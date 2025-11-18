@@ -95,33 +95,26 @@ exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { name, username, avatar, password, bio } = req.body;
+    const { name, username, bio } = req.body;
 
-    let updateData = { name, username, avatar, bio };
-
-    // If new password provided → hash it
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updateData.password = hashedPassword;
+    let updatedData = {
+      name,
+      username,
+      bio
+    };
+    if (req.file) {
+      updatedData.profile_image = req.file.path; 
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       userId,
-      updateData,
+      { $set: updatedData },
       { new: true }
-    ).select('-password');
+    ).select("-password");
 
-    if (!updatedUser)
-      return res.status(404).json({ status: false, message: 'User not found' });
-
-    res.json({
-      status: true,
-      message: "Profile updated successfully",
-      user: updatedUser
-    });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ status: false, message: 'Server error' });
+    res.json({ status: true, message: "Profile updated", user });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
