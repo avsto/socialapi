@@ -24,20 +24,27 @@ exports.createPost = async (req, res) => {
 // Like / Unlike Post
 exports.likePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
+    const postId = req.params.postId;
     const userId = req.user._id;
-    const postOwnerId = post.user;
 
-    const likedIndex = post.likes.indexOf(userId);
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ status: false, message: "Post not found" });
+    }
+
+    const postOwnerId = post.user; // Correct owner reference
+    const alreadyLiked = post.likes.includes(userId);
+
     let moneyAdded = 1;
 
-    if (likedIndex === -1) {
+    if (!alreadyLiked) {
+      // -------------------------
       // LIKE
+      // -------------------------
       post.likes.push(userId);
 
-      // Add earning history
+      // Add earning to wallet history
       await Wallet.create({
         user: postOwnerId,
         type: "earning",
@@ -45,16 +52,20 @@ exports.likePost = async (req, res) => {
         postId: post._id
       });
 
+      // Increase owner wallet balance
       await User.findByIdAndUpdate(postOwnerId, {
         $inc: { wallet: moneyAdded }
       });
 
     } else {
+      // -------------------------
       // UNLIKE
-      post.likes.splice(likedIndex, 1);
-      moneyAdded = 0;
+      // -------------------------
+      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+      moneyAdded = 0; // No earning on unlike
     }
 
+    // Save post
     await post.save();
 
     return res.json({
@@ -65,9 +76,10 @@ exports.likePost = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ status: false, message: "Server error" });
   }
 };
+
 
 
 // Add comment
