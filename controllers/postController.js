@@ -40,7 +40,7 @@ exports.likePost = async (req, res) => {
       post.likes.push(userId);
 
       // Generate random earning between 0.01 - 0.10 rupees
-      moneyAdded = (Math.random() * (0.10 - 0.01) + 0.01).toFixed(2);
+      moneyAdded = 1;
 
       // Update post owner's wallet
       await User.findByIdAndUpdate(postOwnerId, {
