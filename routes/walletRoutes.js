@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/walletController');
+
+const { withdrawRequest, getWalletHistory } = require("../controllers/walletController");
 const protect = require('../middlewares/authMiddleware');
 
-
-router.get('/history', protect, controller.getTransactionHistory);
+router.post("/withdraw", protect, withdrawRequest);
+router.get("/history", protect, getWalletHistory);
 
 module.exports = router;
