@@ -42,7 +42,7 @@ exports.likePost = async (req, res) => {
       post.likes.push(userId);
 
       // Your fixed value
-      moneyAdded = 1; // Add ₹1 per like
+      moneyAdded = 0.3; // Add ₹1 per like
 
       await User.findByIdAndUpdate(postOwnerId, {
         $inc: { wallet: moneyAdded }
@@ -51,7 +51,7 @@ exports.likePost = async (req, res) => {
     } else {
       // UNLIKE
       post.likes.splice(likedIndex, 1);
-      moneyAdded = 0; // No deduction
+      moneyAdded = -0.3; // No deduction
     }
 
     await post.save();
