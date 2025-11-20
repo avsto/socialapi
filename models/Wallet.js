@@ -4,8 +4,12 @@ const walletSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-    // Type: earning = like earning, withdraw = payout request
-    type: { type: String, enum: ["earning", "withdraw"], required: true },
+    // Type: earning = like income, withdraw = payout request
+    type: { 
+      type: String, 
+      enum: ["earning", "withdraw"], 
+      required: true 
+    },
 
     amount: { type: Number, required: true },
 
@@ -19,13 +23,17 @@ const walletSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    // Withdrawal Method
-    method: { type: String, enum: ["UPI", "Bank"], default: null },
+    // Withdrawal method
+    method: { 
+      type: String, 
+      enum: ["UPI", "Bank"], 
+      default: null 
+    },
 
-    // UPI Withdraw
+    // UPI withdrawal
     upiId: { type: String, default: null },
 
-    // Bank Withdraw
+    // Bank withdrawal
     accountNumber: { type: String, default: null },
     ifscCode: { type: String, default: null },
 
