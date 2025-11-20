@@ -72,6 +72,7 @@ exports.getPosts = async (req, res) => {
       caption: post.caption,
       image: post.image,
       user: post.user,
+      likes: post.likes,
       likesCount: post.likes.length,
       comments: post.comments,
       createdAt: post.createdAt,
