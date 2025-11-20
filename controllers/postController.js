@@ -1,7 +1,7 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
 
-// Create post
+// Create Post
 exports.createPost = async (req, res) => {
   try {
     const { caption } = req.body;
@@ -11,6 +11,7 @@ exports.createPost = async (req, res) => {
       user: req.user._id,
       caption,
       image,
+      likes: []
     });
 
     res.json({ status: true, post });
@@ -20,41 +21,37 @@ exports.createPost = async (req, res) => {
   }
 };
 
-// Like / Unlike post
+// Like / Unlike Post
 exports.likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     const userId = req.user._id;
-    const postOwnerId = post.userId;
+    const postOwnerId = post.user; // FIXED (Earlier was post.userId ❌)
 
-    const likedIndex = post.likes.indexOf(userId);
+    // Ensure likes array exists
+    if (!Array.isArray(post.likes)) post.likes = [];
+
+    const likedIndex = post.likes.indexOf(userId.toString());
 
     let moneyAdded = 0;
 
     if (likedIndex === -1) {
-      // -------------------------
-      // LIKE ACTION
-      // -------------------------
+      // LIKE
       post.likes.push(userId);
 
-      // Generate random earning between 0.01 - 0.10 rupees
-      moneyAdded = 1;
+      // Your fixed value
+      moneyAdded = 1; // Add ₹1 per like
 
-      // Update post owner's wallet
       await User.findByIdAndUpdate(postOwnerId, {
-        $inc: { wallet: parseFloat(moneyAdded) }
+        $inc: { wallet: moneyAdded }
       });
 
     } else {
-      // -------------------------
-      // UNLIKE ACTION
-      // -------------------------
+      // UNLIKE
       post.likes.splice(likedIndex, 1);
-
-      // No wallet deduction (do not encourage misuse)
-      moneyAdded = 0;
+      moneyAdded = 0; // No deduction
     }
 
     await post.save();
@@ -62,7 +59,7 @@ exports.likePost = async (req, res) => {
     return res.json({
       status: true,
       likesCount: post.likes.length,
-      moneyAdded: moneyAdded
+      moneyAdded
     });
 
   } catch (err) {
@@ -70,6 +67,7 @@ exports.likePost = async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
+
 
 // Add comment
 exports.addComment = async (req, res) => {
