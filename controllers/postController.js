@@ -1,10 +1,11 @@
 const Post = require("../models/Post");
+const User = require("../models/User");
 
 // Create post
 exports.createPost = async (req, res) => {
   try {
     const { caption } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null; 
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
 
     const post = await Post.create({
       user: req.user._id,
@@ -26,16 +27,44 @@ exports.likePost = async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     const userId = req.user._id;
+    const postOwnerId = post.userId;
+
     const likedIndex = post.likes.indexOf(userId);
 
+    let moneyAdded = 0;
+
     if (likedIndex === -1) {
-      post.likes.push(userId); // Like
+      // -------------------------
+      // LIKE ACTION
+      // -------------------------
+      post.likes.push(userId);
+
+      // Generate random earning between 0.01 - 0.10 rupees
+      moneyAdded = (Math.random() * (0.10 - 0.01) + 0.01).toFixed(2);
+
+      // Update post owner's wallet
+      await User.findByIdAndUpdate(postOwnerId, {
+        $inc: { wallet: parseFloat(moneyAdded) }
+      });
+
     } else {
-      post.likes.splice(likedIndex, 1); // Unlike
+      // -------------------------
+      // UNLIKE ACTION
+      // -------------------------
+      post.likes.splice(likedIndex, 1);
+
+      // No wallet deduction (do not encourage misuse)
+      moneyAdded = 0;
     }
 
     await post.save();
-    res.json({ status: true, likesCount: post.likes.length });
+
+    return res.json({
+      status: true,
+      likesCount: post.likes.length,
+      moneyAdded: moneyAdded
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
