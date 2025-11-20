@@ -33,10 +33,15 @@ exports.likePost = async (req, res) => {
       return res.status(404).json({ status: false, message: "Post not found" });
     }
 
-    const postOwnerId = post.user; // Correct owner reference
+    const postOwnerId = post.user.toString();
     const alreadyLiked = post.likes.includes(userId);
 
     let moneyAdded = 1;
+
+    // Prevent self-earning
+    if (postOwnerId === userId.toString()) {
+      moneyAdded = 0;
+    }
 
     if (!alreadyLiked) {
       // -------------------------
@@ -44,34 +49,39 @@ exports.likePost = async (req, res) => {
       // -------------------------
       post.likes.push(userId);
 
-      // Add earning to wallet history
-      await Wallet.create({
-        user: postOwnerId,
-        type: "earning",
-        amount: moneyAdded,
-        postId: post._id
-      });
+      // Add earning only if NOT self-like
+      if (moneyAdded > 0) {
+        await Wallet.create({
+          user: postOwnerId,
+          type: "earning",
+          amount: moneyAdded,
+          postId: post._id,
+          status: "approved",
+        });
 
-      // Increase owner wallet balance
-      await User.findByIdAndUpdate(postOwnerId, {
-        $inc: { wallet: moneyAdded }
-      });
+        // Increase wallet of post owner
+        await User.findByIdAndUpdate(postOwnerId, {
+          $inc: { wallet: moneyAdded },
+        });
+      }
 
     } else {
       // -------------------------
       // UNLIKE
       // -------------------------
-      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+      post.likes = post.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+
       moneyAdded = 0; // No earning on unlike
     }
 
-    // Save post
     await post.save();
 
     return res.json({
       status: true,
       likesCount: post.likes.length,
-      moneyAdded
+      moneyAdded,
     });
 
   } catch (err) {
@@ -79,6 +89,7 @@ exports.likePost = async (req, res) => {
     return res.status(500).json({ status: false, message: "Server error" });
   }
 };
+
 
 
 
