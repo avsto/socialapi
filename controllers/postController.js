@@ -57,6 +57,7 @@ exports.likePost = async (req, res) => {
           amount: moneyAdded,
           postId: post._id,
           status: "approved",
+          method:"Direct"
         });
 
         // Increase wallet of post owner

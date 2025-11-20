@@ -11,7 +11,7 @@ exports.withdrawRequest = async (req, res) => {
       return res.status(400).json({ status: false, message: "Enter valid amount" });
     }
 
-    if (!method || !["UPI", "Bank"].includes(method)) {
+    if (!method || !["UPI", "Bank", "Direct"].includes(method)) {
       return res.status(400).json({ status: false, message: "Invalid withdrawal method" });
     }
 

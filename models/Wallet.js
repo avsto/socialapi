@@ -26,7 +26,7 @@ const walletSchema = new mongoose.Schema(
     // Withdrawal method
     method: { 
       type: String, 
-      enum: ["UPI", "Bank"], 
+      enum: ["UPI", "Bank", "Direct"], 
       default: null 
     },
 
