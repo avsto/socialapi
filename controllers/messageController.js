@@ -6,24 +6,27 @@ exports.sendMessage = async (req, res) => {
     try {
         const { receiver, message, media_url, media_type } = req.body;
 
-        const newMessage = await Message.create({
-            sender: req.user._id,
+        const newMsg = await Message.create({
+            sender: req.user.id,
             receiver,
             message,
             media_url,
             media_type
         });
 
-        res.json({
-            success: true,
-            message: "Message sent",
-            data: newMessage
-        });
+        const io = global.io;
+
+        // ---- REALTIME EMIT ----
+        io.emit("receive-message", newMsg);
+
+        return res.json({ success: true, data: newMsg });
 
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.log(error);
+        res.status(500).json({ message: "Server error" });
     }
 };
+
 
 // Get chat between two users
 exports.getChat = async (req, res) => {
