@@ -36,7 +36,7 @@ exports.likePost = async (req, res) => {
     const postOwnerId = post.user.toString();
     const alreadyLiked = post.likes.includes(userId);
 
-    let moneyAdded = 1;
+    let moneyAdded = 0.5;
 
     // Prevent self-earning
     if (postOwnerId === userId.toString()) {
@@ -57,7 +57,7 @@ exports.likePost = async (req, res) => {
           amount: moneyAdded,
           postId: post._id,
           status: "approved",
-          method:"Direct"
+          method: "Direct"
         });
 
         // Increase wallet of post owner
@@ -74,7 +74,12 @@ exports.likePost = async (req, res) => {
         (id) => id.toString() !== userId.toString()
       );
 
-      moneyAdded = 0; // No earning on unlike
+      moneyAdded = -0.5; // No earning on unlike
+
+      await User.findByIdAndUpdate(postOwnerId, {
+        $inc: { wallet: moneyAdded },
+      });
+
     }
 
     await post.save();
