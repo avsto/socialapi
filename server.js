@@ -6,21 +6,33 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require("./routes/postRoutes");
 const walletRoutes = require("./routes/walletRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 connectDB();
-
 app.use(cors());
-app.use(express.json()); // parse JSON
+app.use(express.json());
 
-// routes
+// ROUTES
 app.use('/api/auth', authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/wallet", walletRoutes);
-app.use("/api/messages", require("./routes/messageRoutes"));
+app.use("/api/messages", messageRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => res.send('API is running'));
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+// ---------------------- SOCKET.IO SERVER -------------------------
+const http = require("http").createServer(app);
+const io = require("socket.io")(http, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+require("./socket/chatSocket")(io);
+// ----------------------------------------------------------------
+
+http.listen(PORT, () => console.log(`Server running on port ${PORT}`));
