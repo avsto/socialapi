@@ -18,6 +18,7 @@ app.use(express.json()); // parse JSON
 app.use('/api/auth', authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/wallet", walletRoutes);
+app.use("/api/messages", require("./routes/messageRoutes"));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => res.send('API is running'));
