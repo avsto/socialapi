@@ -7,7 +7,7 @@ exports.sendMessage = async (req, res) => {
         const { receiver, message, media_url, media_type } = req.body;
 
         const newMsg = await Message.create({
-            sender: req.user.id,
+            sender: req.user._id,
             receiver,
             message,
             media_url,
@@ -16,11 +16,11 @@ exports.sendMessage = async (req, res) => {
 
         const io = global.io;
 
-        // ---- REALTIME EMIT ----
-        io.emit("receive-message", newMsg);
+        // ---- EMIT REALTIME MESSAGE ONLY TO RELEVANT USERS ----
+        io.emit(`receive-message-${receiver}`, newMsg);
+        io.emit(`receive-message-${req.user._id}`, newMsg); // also send to sender
 
         return res.json({ success: true, data: newMsg });
-
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error" });
