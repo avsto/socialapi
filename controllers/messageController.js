@@ -45,7 +45,7 @@ exports.getChat = async (req, res) => {
     }
 };
 
-// Chat list (last message for each user)
+// Chat list (latest message)
 exports.chatList = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -53,7 +53,11 @@ exports.chatList = async (req, res) => {
         const chats = await Message.aggregate([
             {
                 $match: {
-                    $or: [{ sender: userId }, { receiver: userId }]
+                    deletedBy: { $ne: userId },
+                    $or: [
+                        { sender: userId },
+                        { receiver: userId }
+                    ]
                 }
             },
             { $sort: { createdAt: -1 } },
@@ -94,7 +98,7 @@ exports.markSeen = async (req, res) => {
     }
 };
 
-// Delete message for one user
+// Delete message
 exports.deleteMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
