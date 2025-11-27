@@ -1,31 +1,42 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
 
-// Send message
 exports.sendMessage = async (req, res) => {
     try {
-        const { receiver, message, media_url, media_type } = req.body;
+        const { receiver, message, media_url = null, media_type = null } = req.body;
+        const senderId = req.user._id;
 
+        if (!receiver || !message) {
+            return res.status(400).json({ message: "Receiver ID and message content are required." });
+        }
+        // Create new message in the database
         const newMsg = await Message.create({
-            sender: req.user._id,
+            sender: senderId,
             receiver,
             message,
             media_url,
-            media_type
+            media_type,
         });
 
         const io = global.io;
 
-        // ---- EMIT REALTIME MESSAGE ONLY TO RELEVANT USERS ----
-        io.emit(`receive-message-${receiver}`, newMsg);
-        io.emit(`receive-message-${req.user._id}`, newMsg); // also send to sender
+        if (io) {
+            io.to(receiver.toString()).emit("receive-message", newMsg);
+            io.to(senderId.toString()).emit("receive-message", newMsg);
+        }
 
-        return res.json({ success: true, data: newMsg });
+        return res.status(201).json({
+            success: true,
+            data: newMsg,
+            message: "Message sent successfully and emitted via socket."
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Server error" });
+        console.error("Send Message Error:", error);
+        return res.status(500).json({ message: "Server error" });
     }
 };
+
 
 
 // Get chat between two users
