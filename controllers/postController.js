@@ -122,6 +122,7 @@ exports.getPosts = async (req, res) => {
     const posts = await Post.find()
       .populate("user", "username name profile_image")
       .populate("comments.user", "username name profile_image")
+      .populate("shares", "username name profile_image")
       .sort({ createdAt: -1 });
 
     const formatted = posts.map((post) => ({
@@ -129,13 +130,72 @@ exports.getPosts = async (req, res) => {
       caption: post.caption,
       image: post.image,
       user: post.user,
+
+      // LIKES
       likes: post.likes,
       likesCount: post.likes.length,
+
+      // SHARES
+      shares: post.shares,
+      sharesCount: post.shares.length,
+
+      // COMMENTS
       comments: post.comments,
+      commentsCount: post.comments.length,   // ⭐ NEW FIELD
+
       createdAt: post.createdAt,
     }));
 
     res.json({ status: true, posts: formatted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+
+exports.getLikesOfPost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Post.findById(postId)
+      .populate("likes", "name username profile_image"); // ⭐ return user details
+
+    if (!post) {
+      return res.status(404).json({ status: false, message: "Post not found" });
+    }
+
+    res.json({
+      status: true,
+      totalLikes: post.likes.length,
+      users: post.likes,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.getSharesOfPost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Post.findById(postId)
+      .populate("shares", "name username profile_image"); // populate user list
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Post not found" });
+    }
+
+    res.json({
+      status: true,
+      totalShares: post.shares.length,
+      users: post.shares,
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });

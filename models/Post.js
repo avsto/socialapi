@@ -1,10 +1,22 @@
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
   caption: { type: String },
+
   image: { type: String },
-  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+  // LIKES
+  likes: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  ],
+
+  // COMMENTS
   comments: [
     {
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -12,6 +24,12 @@ const PostSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+
+  // ⭐ NEW FIELD — SHARE FEATURE
+  shares: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User" } // user IDs who shared
+  ],
+
   createdAt: { type: Date, default: Date.now },
 });
 

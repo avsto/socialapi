@@ -10,6 +10,11 @@ router.post("/add", protect, upload.single("image"), postController.createPost);
 
 // Like / Unlike
 router.post("/like/:postId", protect, postController.likePost);
+router.get("/getLikes/:id", protect, postController.getLikesOfPost);
+
+// share
+router.get("/getShares/:id", protect, postController.getSharesOfPost);
+
 
 // Add comment
 router.post("/comment/:postId", protect, postController.addComment);

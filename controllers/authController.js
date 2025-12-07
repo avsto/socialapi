@@ -30,8 +30,9 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      username,
-      name: name || username,
+      username:name,
+      phone:username,
+      name: name,
       password: hashed
     });
 
@@ -54,7 +55,7 @@ exports.login = async (req, res) => {
     if (!username || !password)
       return res.status(400).json({ status: false, message: 'Missing fields' });
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ phone:username });
     if (!user)
       return res.status(401).json({ status: false, message: 'Invalid credentials' });
 
