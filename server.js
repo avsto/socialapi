@@ -33,6 +33,22 @@ app.use('/api/messages', messageRoutes);
 // Root endpoint
 app.get('/', (req, res) => res.send('API is running...'));
 
+
+/// view
+
+// Set view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.get('/privacy-policy', (req, res) => {
+    res.render('PrivacyPolicy', {
+        title: 'Privacy Policy'
+    });
+});
+
+
+
+
+
 // Socket.IO setup
 const server = http.createServer(app);
 const io = new Server(server, {
