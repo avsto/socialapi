@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users</title>
+    <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h2 class="logo">Admin</h2>
+
+        <ul class="menu">
+            <li><a href="/admin/dashboard">Dashboard</a></li>
+            <li class="active"><a href="/admin/users">Users</a></li>
+            <li>Posts</li>
+            <li>Wallet</li>
+            <li>Messages</li>
+            <li>Settings</li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Header -->
+        <header class="header">
+            <h1>Users</h1>
+            <button id="themeToggle" class="theme-btn">🌙</button>
+        </header>
+
+        <!-- Table Section -->
+        <section class="table-section">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Wallet</th>
+                        <th>Date Joined</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <% latestUsers.forEach(user=> { %>
+                        <tr>
+
+                            <td>
+                                <img src="https://brielix.com/<%= user.profile_image || '/images/default-profile-icon-6.jpg' %>" alt="Profile" class="profile-pic" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+                                <%= user.name %>
+                            </td>
+                            <td>
+                                <%= user.phone %>
+                            </td>
+                            <td>
+                                <%= user.wallet %>
+                            </td>
+                            <td>
+                                <%= user.createdAt.toDateString() %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <% if(currentPage> 1){ %>
+                    <a href="?page=<%= currentPage - 1 %>">Prev</a>
+                    <% } %>
+
+                        <% for(let i=1; i <=totalPages; i++){ %>
+                            <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+
+                                <% if(currentPage < totalPages){ %>
+                                    <a href="?page=<%= currentPage + 1 %>">Next</a>
+                                    <% } %>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Light / Dark Theme Toggle
+        const toggle = document.getElementById("themeToggle");
+        const html = document.documentElement;
+
+        toggle.addEventListener("click", () => {
+            const theme = html.getAttribute("data-theme");
+            if (theme === "light") {
+                html.setAttribute("data-theme", "dark");
+                toggle.textContent = "☀️";
+            } else {
+                html.setAttribute("data-theme", "light");
+                toggle.textContent = "🌙";
+            }
+        });
+    </script>
+
+</body>
+
+</html>

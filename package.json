@@ -16,6 +16,7 @@
     "dotenv": "^16.6.1",
     "ejs": "^3.1.10",
     "express": "^4.22.1",
+    "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.1",
     "multer": "^2.0.2",
