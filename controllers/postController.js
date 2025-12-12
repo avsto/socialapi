@@ -119,12 +119,24 @@ exports.addComment = async (req, res) => {
 // Get posts
 exports.getPosts = async (req, res) => {
   try {
+    // Query Params
+    const page = parseInt(req.query.page) || 1;      // default = 1
+    const limit = parseInt(req.query.limit) || 10;   // default = 10
+    const skip = (page - 1) * limit;
+
+    // Total posts count
+    const totalPosts = await Post.countDocuments();
+
+    // Fetch paginated posts
     const posts = await Post.find()
       .populate("user", "username name profile_image")
       .populate("comments.user", "username name profile_image")
       .populate("shares", "username name profile_image")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
+    // Format data
     const formatted = posts.map((post) => ({
       _id: post._id,
       caption: post.caption,
@@ -141,17 +153,27 @@ exports.getPosts = async (req, res) => {
 
       // COMMENTS
       comments: post.comments,
-      commentsCount: post.comments.length,   // ⭐ NEW FIELD
+      commentsCount: post.comments.length,
 
       createdAt: post.createdAt,
     }));
 
-    res.json({ status: true, posts: formatted });
+    // Pagination Response
+    res.json({
+      status: true,
+      page,
+      limit,
+      totalPosts,
+      totalPages: Math.ceil(totalPosts / limit),
+      posts: formatted,
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
+
 
 
 exports.getLikesOfPost = async (req, res) => {
