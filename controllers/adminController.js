@@ -1,6 +1,7 @@
 const bcryptjs = require('bcryptjs');
 const User = require('../models/User');
 const Post = require("../models/Post");
+const Wallet = require("../models/Wallet");
 
 exports.login = async (req, res) => {
   try {
@@ -67,6 +68,7 @@ exports.dashboard = async (req, res) => {
     totalPages,
   });
 };
+
 exports.users = async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Current page
   const limit = 10; // Users per page
@@ -83,9 +85,40 @@ exports.users = async (req, res) => {
   const totalPages = Math.ceil(totalUsers / limit);
 
   res.render("admin/Users", {
-    
+
     latestUsers,
     currentPage: page,
     totalPages,
   });
 };
+
+exports.payout = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Total payout count
+    const total = await Wallet.countDocuments({ type: "withdraw" });
+
+    // Paginated payout history WITH POPULATED USER DETAILS
+    const history = await Wallet.find({ type: "withdraw" })
+      .populate("user", "name phone profile_image wallet") // 👈 get user details
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.render("admin/PayoutRequest", {
+      history,
+      currentPage: page,
+      totalPages,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server Error");
+  }
+};
+

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Users</title>
+    <title>Payout Request</title>
     <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 
@@ -16,9 +16,9 @@
 
         <ul class="menu">
             <li><a href="/admin/dashboard">Dashboard</a></li>
-            <li  class="active"><a href="/admin/users">Users</a></li>
+            <li><a href="/admin/users">Users</a></li>
             <li><a href="/admin/posts">Posts</a></li>
-            <li ><a href="/admin/payout">Payout</a></li>
+            <li class="active"><a href="/admin/payout">Payout</a></li>
             <li><a href="/admin/messages">Messages</a></li>
             <li><a href="/admin/settings">Settings</a></li>
         </ul>
@@ -29,7 +29,7 @@
 
         <!-- Header -->
         <header class="header">
-            <h1>Users</h1>
+            <h1>Payout Request</h1>
             <button id="themeToggle" class="theme-btn">🌙</button>
         </header>
 
@@ -42,46 +42,67 @@
                         <th>Name</th>
                         <th>Phone</th>
                         <th>Wallet</th>
-                        <th>Date Joined</th>
+                        <th>Withdrawal Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Method</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <% latestUsers.forEach(user=> { %>
+                    <% history.forEach(item=> { %>
                         <tr>
+                            <td>
+                                <img src="https://brielix.com/<%= item.user?.profile_image || '/images/default-profile-icon-6.jpg' %>"
+                                    class="profile-pic"
+                                    style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                                <%= item.user?.name %>
+                            </td>
 
                             <td>
-                                <img src="https://brielix.com/<%= user.profile_image || '/images/default-profile-icon-6.jpg' %>" alt="Profile" class="profile-pic" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
-                                <%= user.name %>
+                                <%= item.user?.phone %>
                             </td>
                             <td>
-                                <%= user.phone %>
+                                <%= item.user?.wallet %>
+                            </td>
+
+                            <td>₹ <%= item.amount %>
+                            </td>
+
+                            <td>
+                                <%= item.createdAt.toDateString() %>
                             </td>
                             <td>
-                                <%= user.wallet %>
+                                <%= item.status %>
                             </td>
                             <td>
-                                <%= user.createdAt.toDateString() %>
+                               <p>upiId: <%= item.upiId %></p>
+                               <p>accountNumber: <%= item.accountNumber %></p>
+                               <p>ifscCode: <%= item.ifscCode %></p>
                             </td>
                         </tr>
                         <% }) %>
                 </tbody>
+
             </table>
             <div class="pagination">
-                <% if(currentPage> 1){ %>
+
+                <% if (currentPage> 1) { %>
                     <a href="?page=<%= currentPage - 1 %>">Prev</a>
                     <% } %>
 
-                        <% for(let i=1; i <=totalPages; i++){ %>
+                        <% for(let i=1; i <=totalPages; i++) { %>
                             <a href="?page=<%= i %>" class="<%= i === currentPage ? 'active' : '' %>">
                                 <%= i %>
                             </a>
                             <% } %>
 
-                                <% if(currentPage < totalPages){ %>
+                                <% if (currentPage < totalPages) { %>
                                     <a href="?page=<%= currentPage + 1 %>">Next</a>
                                     <% } %>
+
             </div>
+
         </section>
     </main>
 
