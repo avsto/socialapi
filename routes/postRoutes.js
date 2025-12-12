@@ -3,10 +3,10 @@ const router = express.Router();
 const postController = require("../controllers/postController");
 const protect = require("../middlewares/authMiddleware");
 
-const upload = require('../middlewares/upload');
+const { upload, compressFile } = require("../middlewares/upload");
 
 // Create post
-router.post("/add", protect, upload.single("image"), postController.createPost);
+router.post("/add", protect, upload.single("image"), compressFile, postController.createPost);
 
 // Like / Unlike
 router.post("/like/:postId", protect, postController.likePost);
