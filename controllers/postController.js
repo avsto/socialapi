@@ -199,6 +199,37 @@ exports.getLikesOfPost = async (req, res) => {
   }
 };
 
+exports.getCommentsOfPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const post = await Post.findById(postId)
+      .select("comments") // fetch only comments
+      .populate("comments.user", "name username profile_image");
+
+    if (!post) {
+      return res.status(404).json({
+        status: false,
+        message: "Post not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      totalComments: post.comments.length,
+      comments: post.comments,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
+
 exports.getSharesOfPost = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -221,5 +252,39 @@ exports.getSharesOfPost = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+exports.getPostDetail = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user._id; // from protect middleware
+
+    const post = await Post.findById(postId)
+      .populate("user", "name username profile_image")
+      .populate("comments.user", "name username profile_image");
+
+    if (!post) {
+      return res.status(404).json({
+        status: false,
+        message: "Post not found",
+      });
+    }
+
+    const isLiked = post.likes.includes(userId);
+
+    return res.status(200).json({
+      status: true,
+      post,
+      isLiked,
+      userId,
+    });
+
+  } catch (error) {
+    console.error("POST DETAIL ERROR:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
   }
 };

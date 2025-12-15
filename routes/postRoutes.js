@@ -18,8 +18,10 @@ router.get("/getShares/:id", protect, postController.getSharesOfPost);
 
 // Add comment
 router.post("/comment/:postId", protect, postController.addComment);
+router.get("/getComments/:postId", protect, postController.getCommentsOfPost);
 
 // Get all posts
 router.get("/", protect, postController.getPosts);
+router.get("/:postId", protect, postController.getPostDetail);
 
 module.exports = router;
