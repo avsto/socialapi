@@ -1,6 +1,8 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
+
+const sendNotification = require('../utils/sendNotification');
 // Create Post
 exports.createPost = async (req, res) => {
   try {
@@ -41,7 +43,7 @@ exports.likePost = async (req, res) => {
     if (postOwnerId === userId.toString()) {
       moneyAdded = 0;
     }
-    
+
     if (!alreadyLiked) {
       // ✅ LIKE
       post.likes.push(userId);
@@ -78,7 +80,7 @@ exports.likePost = async (req, res) => {
       }
 
     } else {
-    
+
       post.likes = post.likes.filter(
         (id) => id.toString() !== userId.toString()
       );
