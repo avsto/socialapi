@@ -23,33 +23,29 @@ exports.createPost = async (req, res) => {
 
 // Like / Unlike Post
 exports.likePost = async (req, res) => {
+
   try {
+
     const postId = req.params.postId;
     const userId = req.user._id;
 
     const post = await Post.findById(postId);
-
-    if (!post) {
+    if (!post)
       return res.status(404).json({ status: false, message: "Post not found" });
-    }
 
     const postOwnerId = post.user.toString();
     const alreadyLiked = post.likes.includes(userId);
 
-    let moneyAdded = 0.15;
+    let moneyAdded = 0.10;
 
-    // Prevent self-earning
     if (postOwnerId === userId.toString()) {
       moneyAdded = 0;
     }
 
     if (!alreadyLiked) {
-      // -------------------------
-      // LIKE
-      // -------------------------
+      // ✅ LIKE
       post.likes.push(userId);
 
-      // Add earning only if NOT self-like
       if (moneyAdded > 0) {
         await Wallet.create({
           user: postOwnerId,
@@ -60,31 +56,43 @@ exports.likePost = async (req, res) => {
           method: "Direct"
         });
 
-        // Increase wallet of post owner
         await User.findByIdAndUpdate(postOwnerId, {
           $inc: { wallet: moneyAdded },
         });
       }
 
+      // 🔔 SEND NOTIFICATION (NOT SELF)
+      if (postOwnerId !== userId.toString()) {
+        const liker = await User.findById(userId).select('name username');
+
+        await sendNotification(
+          postOwnerId,
+          "New Like ❤️",
+          `${liker.name || liker.username} liked your post`,
+          {
+            type: "LIKE",
+            postId: postId.toString(),
+            userId: userId.toString()
+          }
+        );
+      }
+
     } else {
-      // -------------------------
-      // UNLIKE
-      // -------------------------
+    
       post.likes = post.likes.filter(
         (id) => id.toString() !== userId.toString()
       );
 
-      moneyAdded = -0.15; // No earning on unlike
+      moneyAdded = -0.10;
 
       await User.findByIdAndUpdate(postOwnerId, {
         $inc: { wallet: moneyAdded },
       });
-
     }
 
     await post.save();
 
-    return res.json({
+    res.json({
       status: true,
       likesCount: post.likes.length,
       moneyAdded,
@@ -92,12 +100,9 @@ exports.likePost = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ status: false, message: "Server error" });
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
-
-
-
 
 // Add comment
 exports.addComment = async (req, res) => {

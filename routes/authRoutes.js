@@ -7,6 +7,7 @@ const { upload, compressFile } = require("../middlewares/upload");
 router.post('/register', controller.register);
 router.post('/login', controller.login);
 router.get('/me', protect, controller.me);
+router.post('/saveDeviceToken', protect, controller.saveDeviceToken);
 
 // 👇 Add multer here
 router.put('/update', protect, upload.single("profile_image"), compressFile, controller.updateProfile);
