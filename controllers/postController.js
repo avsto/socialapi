@@ -41,6 +41,7 @@ exports.likePost = async (req, res) => {
     if (postOwnerId === userId.toString()) {
       moneyAdded = 0;
     }
+    
     if (!alreadyLiked) {
       // ✅ LIKE
       post.likes.push(userId);
