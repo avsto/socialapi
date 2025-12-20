@@ -22,6 +22,7 @@ router.get("/getComments/:postId", protect, postController.getCommentsOfPost);
 
 // Get all posts
 router.get("/", protect, postController.getPosts);
+router.get("/getVideoPosts", protect, postController.getVideoPosts);
 router.get("/:postId", protect, postController.getPostDetail);
 
 module.exports = router;
