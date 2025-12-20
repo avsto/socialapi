@@ -181,6 +181,65 @@ exports.getPosts = async (req, res) => {
   }
 };
 
+exports.getVideoPosts = async (req, res) => {
+  try {
+    // Query Params
+    const page = parseInt(req.query.page) || 1;    // default = 1
+    const limit = parseInt(req.query.limit) || 10; // default = 10
+    const skip = (page - 1) * limit;
+
+    // Only video file types
+    const videoRegex = /\.(mp4|mov|mkv|avi|webm)$/i;
+
+    // Count total video posts
+    const totalPosts = await Post.countDocuments({ image: { $regex: videoRegex } });
+
+    // Fetch paginated video posts
+    const posts = await Post.find({ image: { $regex: videoRegex } })
+      .populate("user", "username name profile_image")
+      .populate("comments.user", "username name profile_image")
+      .populate("shares", "username name profile_image")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Format data
+    const formatted = posts.map((post) => ({
+      _id: post._id,
+      caption: post.caption,
+      image: post.image,
+      user: post.user,
+
+      // LIKES
+      likes: post.likes,
+      likesCount: post.likes.length,
+
+      // SHARES
+      shares: post.shares,
+      sharesCount: post.shares.length,
+
+      // COMMENTS
+      comments: post.comments,
+      commentsCount: post.comments.length,
+
+      createdAt: post.createdAt,
+    }));
+
+    // Pagination Response
+    res.json({
+      status: true,
+      page,
+      limit,
+      totalPosts,
+      totalPages: Math.ceil(totalPosts / limit),
+      posts: formatted,
+    });
+
+  } catch (err) {
+    console.error("GET VIDEO POSTS ERROR:", err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+};
 
 
 exports.getLikesOfPost = async (req, res) => {
