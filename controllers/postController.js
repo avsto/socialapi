@@ -38,7 +38,7 @@ exports.likePost = async (req, res) => {
     const postOwnerId = post.user.toString();
     const alreadyLiked = post.likes.includes(userId);
 
-    let moneyAdded = 0.10;
+    let moneyAdded = 0.50;
 
     if (postOwnerId === userId.toString()) {
       moneyAdded = 0;
@@ -85,7 +85,7 @@ exports.likePost = async (req, res) => {
         (id) => id.toString() !== userId.toString()
       );
 
-      moneyAdded = -0.10;
+      moneyAdded = -0.50;
 
       await User.findByIdAndUpdate(postOwnerId, {
         $inc: { wallet: moneyAdded },
