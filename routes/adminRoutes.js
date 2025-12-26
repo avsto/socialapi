@@ -11,5 +11,6 @@ router.post("/login", adminController.login);
 router.get("/dashboard", protect, adminController.dashboard);
 router.get("/users", protect, adminController.users);
 router.get("/payout", protect, adminController.payout);
+router.post("/update-payout-status", protect, adminController.updatepayoutstatus);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const bcryptjs = require('bcryptjs');
 const User = require('../models/User');
 const Post = require("../models/Post");
 const Wallet = require("../models/Wallet");
+const sendNotification = require('../utils/sendNotification');
 
 exports.login = async (req, res) => {
   try {
@@ -122,3 +123,104 @@ exports.payout = async (req, res) => {
   }
 };
 
+
+exports.updatepayoutstatus = async (req, res) => {
+  try {
+    const { id, status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID aur status required hai'
+      });
+    }
+
+    const allowedStatus = ['pending', 'approved', 'rejected'];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    // Withdraw payout find
+    const payout = await Wallet.findOne({
+      _id: id,
+      type: 'withdraw'
+    });
+
+    if (!payout) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payout request nahi mila'
+      });
+    }
+
+    // Same status dobara na ho
+    if (payout.status === status) {
+      return res.status(400).json({
+        success: false,
+        message: `Payout already ${status} hai`
+      });
+    }
+
+    const user = await User.findById(payout.user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User nahi mila'
+      });
+    }
+
+    // 🔥 Reject hone par wallet refund
+    if (status === 'rejected') {
+      user.wallet += payout.amount;
+      await user.save();
+    }
+
+    // Status update
+    payout.status = status;
+    await payout.save();
+
+    // 🔔 Notification messages (status wise)
+    let title = '';
+    let message = '';
+
+    if (status === 'approved') {
+      title = 'Withdrawal Approved ✅';
+      message = `₹${payout.amount} ka withdrawal approve ho gaya hai.`;
+    }
+    else if (status === 'rejected') {
+      title = 'Withdrawal Rejected ❌';
+      message = `₹${payout.amount} ka withdrawal reject ho gaya hai. Amount wallet me wapas add kar diya gaya hai.`;
+    }
+
+    // 🔔 Send notification (only approved / rejected)
+    if (status !== 'pending') {
+      await sendNotification(
+        payout.user,
+        title,
+        message,
+        {
+          type: 'PAYOUT_STATUS',
+          status: status,
+          amount: payout.amount.toString(),
+          payoutId: payout._id.toString()
+        }
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Payout ${status} ho gaya`,
+      payout
+    });
+
+  } catch (error) {
+    console.error('Update payout error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};

@@ -73,12 +73,27 @@
                                 <%= item.createdAt.toDateString() %>
                             </td>
                             <td>
-                                <%= item.status %>
+
+                                <select onchange="updateStatus('<%= item.id %>', this.value)">
+                                    <option value="pending" <%=item.status==='pending' ? 'selected' : '' %>>
+                                        Pending
+                                    </option>
+                                    <option value="approved" <%=item.status==='approved' ? 'selected' : '' %>>
+                                        Approved
+                                    </option>
+                                    <option value="rejected" <%=item.status==='rejected' ? 'selected' : '' %>>
+                                        Rejected
+                                    </option>
+                                </select>
+
                             </td>
                             <td>
-                               <p>upiId: <%= item.upiId %></p>
-                               <p>accountNumber: <%= item.accountNumber %></p>
-                               <p>ifscCode: <%= item.ifscCode %></p>
+                                <p>upiId: <%= item.upiId %>
+                                </p>
+                                <p>accountNumber: <%= item.accountNumber %>
+                                </p>
+                                <p>ifscCode: <%= item.ifscCode %>
+                                </p>
                             </td>
                         </tr>
                         <% }) %>
@@ -121,6 +136,32 @@
                 toggle.textContent = "🌙";
             }
         });
+
+
+    </script>
+    <script>
+        function updateStatus(id, status) {
+
+            fetch('/admin/update-payout-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: id,
+                    status: status
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    alert('Status updated successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Something went wrong');
+                });
+        }
     </script>
 
 </body>
