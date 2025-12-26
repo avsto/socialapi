@@ -126,43 +126,46 @@ exports.addComment = async (req, res) => {
 // Get posts
 exports.getPosts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    // Query Params
+    const page = parseInt(req.query.page) || 1;      // default = 1
+    const limit = parseInt(req.query.limit) || 10;   // default = 10
     const skip = (page - 1) * limit;
 
+    // Total posts count
     const totalPosts = await Post.countDocuments();
 
-    const posts = await Post.aggregate([
-      { $sample: { size: totalPosts } }, // randomize all
-      { $skip: skip },
-      { $limit: limit }
-    ]);
+    // Fetch paginated posts
+    const posts = await Post.find()
+      .populate("user", "username name profile_image")
+      .populate("comments.user", "username name profile_image")
+      .populate("shares", "username name profile_image")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    // Populate manually
-    await Post.populate(posts, [
-      { path: 'user', select: 'username name profile_image' },
-      { path: 'comments.user', select: 'username name profile_image' },
-      { path: 'shares', select: 'username name profile_image' },
-    ]);
-
-    const formatted = posts.map(post => ({
+    // Format data
+    const formatted = posts.map((post) => ({
       _id: post._id,
       caption: post.caption,
       image: post.image,
       user: post.user,
 
+      // LIKES
       likes: post.likes,
       likesCount: post.likes.length,
 
+      // SHARES
       shares: post.shares,
       sharesCount: post.shares.length,
 
+      // COMMENTS
       comments: post.comments,
       commentsCount: post.comments.length,
 
       createdAt: post.createdAt,
     }));
 
+    // Pagination Response
     res.json({
       status: true,
       page,
@@ -177,7 +180,6 @@ exports.getPosts = async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
-
 
 exports.getVideoPosts = async (req, res) => {
   try {
