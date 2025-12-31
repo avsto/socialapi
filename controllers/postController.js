@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 
 const sendNotification = require('../utils/sendNotification');
+const UserSettings = require("../models/UserSettings");
 // Create Post
 exports.createPost = async (req, res) => {
   try {
@@ -38,11 +39,16 @@ exports.likePost = async (req, res) => {
     const postOwnerId = post.user.toString();
     const alreadyLiked = post.likes.includes(userId);
 
-    let moneyAdded = 0.50;
+    const settings = await UserSettings.findOne({ user: postOwnerId });
+    const likeAmount = settings?.earnings?.post_like_amount || 0.5;
+
+    let moneyAdded = likeAmount;
 
     if (postOwnerId === userId.toString()) {
       moneyAdded = 0;
     }
+
+    
 
     if (!alreadyLiked) {
       // ✅ LIKE
@@ -85,7 +91,7 @@ exports.likePost = async (req, res) => {
         (id) => id.toString() !== userId.toString()
       );
 
-      moneyAdded = -0.50;
+      moneyAdded = -likeAmount;
 
       await User.findByIdAndUpdate(postOwnerId, {
         $inc: { wallet: moneyAdded },

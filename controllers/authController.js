@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Device = require('../models/Device');
 const Otp = require("../models/Otp");
+const UserSettings = require("../models/UserSettings");
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '100Y';
 
@@ -79,17 +80,50 @@ exports.login = async (req, res) => {
 --------------------------------------*/
 exports.me = async (req, res) => {
   try {
-    if (!req.user)
-      return res.status(401).json({ status: false, message: 'Unauthorized' });
+    if (!req.user) {
+      return res.status(401).json({
+        status: false,
+        message: 'Unauthorized'
+      });
+    }
 
+    // Get user
     const user = await User.findById(req.user.id).select('-password');
-    res.json({ status: true, user });
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check settings
+    let settings = await UserSettings.findOne({ user: req.user.id });
+
+    // Create default settings if not exists
+    if (!settings) {
+      settings = await UserSettings.create({
+        user: req.user.id,
+        earnings: {
+          post_like_amount: 0.5 // default 50 paise
+        }
+      });
+    }
+
+    res.json({
+      status: true,
+      user,
+      settings
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: false, message: 'Server error' });
+    res.status(500).json({
+      status: false,
+      message: 'Server error'
+    });
   }
 };
+
 
 
 
