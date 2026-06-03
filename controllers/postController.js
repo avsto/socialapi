@@ -2,7 +2,7 @@ const Post = require("../models/Post");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 
-const sendNotification = require('../utils/sendNotification');
+const sendNotification = require("../utils/sendNotification");
 const UserSettings = require("../models/UserSettings");
 // Create Post
 exports.createPost = async (req, res) => {
@@ -10,25 +10,52 @@ exports.createPost = async (req, res) => {
     const { caption } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : null;
 
+    // Aaj ke din ka start aur end time
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // User ki aaj ki posts count karo
+    const todayPostCount = await Post.countDocuments({
+      user: req.user._id,
+      createdAt: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    });
+
+    if (todayPostCount >= 2) {
+      return res.status(400).json({
+        status: false,
+        message: "You can only create up to 2 posts per day.",
+      });
+    }
+
     const post = await Post.create({
       user: req.user._id,
       caption,
       image,
-      likes: []
+      likes: [],
     });
 
-    res.json({ status: true, post });
+    res.json({
+      status: true,
+      post,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: false, message: "Server error" });
+    res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
   }
 };
 
 // Like / Unlike Post
 exports.likePost = async (req, res) => {
-
   try {
-
     const postId = req.params.postId;
     const userId = req.user._id;
 
@@ -48,8 +75,6 @@ exports.likePost = async (req, res) => {
       moneyAdded = 0;
     }
 
-    
-
     if (!alreadyLiked) {
       // ✅ LIKE
       post.likes.push(userId);
@@ -61,7 +86,7 @@ exports.likePost = async (req, res) => {
           amount: moneyAdded,
           postId: post._id,
           status: "approved",
-          method: "Direct"
+          method: "Direct",
         });
 
         await User.findByIdAndUpdate(postOwnerId, {
@@ -71,7 +96,7 @@ exports.likePost = async (req, res) => {
 
       // 🔔 SEND NOTIFICATION (NOT SELF)
       if (postOwnerId !== userId.toString()) {
-        const liker = await User.findById(userId).select('name username');
+        const liker = await User.findById(userId).select("name username");
 
         await sendNotification(
           postOwnerId,
@@ -80,15 +105,13 @@ exports.likePost = async (req, res) => {
           {
             type: "LIKE",
             postId: postId.toString(),
-            userId: userId.toString()
-          }
+            userId: userId.toString(),
+          },
         );
       }
-
     } else {
-
       post.likes = post.likes.filter(
-        (id) => id.toString() !== userId.toString()
+        (id) => id.toString() !== userId.toString(),
       );
 
       moneyAdded = -likeAmount;
@@ -105,7 +128,6 @@ exports.likePost = async (req, res) => {
       likesCount: post.likes.length,
       moneyAdded,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -133,8 +155,8 @@ exports.addComment = async (req, res) => {
 exports.getPosts = async (req, res) => {
   try {
     // Query Params
-    const page = parseInt(req.query.page) || 1;      // default = 1
-    const limit = parseInt(req.query.limit) || 10;   // default = 10
+    const page = parseInt(req.query.page) || 1; // default = 1
+    const limit = parseInt(req.query.limit) || 10; // default = 10
     const skip = (page - 1) * limit;
 
     // Total posts count
@@ -180,7 +202,6 @@ exports.getPosts = async (req, res) => {
       totalPages: Math.ceil(totalPosts / limit),
       posts: formatted,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -190,7 +211,7 @@ exports.getPosts = async (req, res) => {
 exports.getVideoPosts = async (req, res) => {
   try {
     // Query Params
-    const page = parseInt(req.query.page) || 1;    // default = 1
+    const page = parseInt(req.query.page) || 1; // default = 1
     const limit = parseInt(req.query.limit) || 10; // default = 10
     const skip = (page - 1) * limit;
 
@@ -198,7 +219,9 @@ exports.getVideoPosts = async (req, res) => {
     const videoRegex = /\.(mp4|mov|mkv|avi|webm)$/i;
 
     // Count total video posts
-    const totalPosts = await Post.countDocuments({ image: { $regex: videoRegex } });
+    const totalPosts = await Post.countDocuments({
+      image: { $regex: videoRegex },
+    });
 
     // Fetch paginated video posts
     const posts = await Post.find({ image: { $regex: videoRegex } })
@@ -240,20 +263,20 @@ exports.getVideoPosts = async (req, res) => {
       totalPages: Math.ceil(totalPosts / limit),
       posts: formatted,
     });
-
   } catch (err) {
     console.error("GET VIDEO POSTS ERROR:", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
-
 exports.getLikesOfPost = async (req, res) => {
   try {
     const postId = req.params.id;
 
-    const post = await Post.findById(postId)
-      .populate("likes", "name username profile_image"); // ⭐ return user details
+    const post = await Post.findById(postId).populate(
+      "likes",
+      "name username profile_image",
+    ); // ⭐ return user details
 
     if (!post) {
       return res.status(404).json({ status: false, message: "Post not found" });
@@ -264,7 +287,6 @@ exports.getLikesOfPost = async (req, res) => {
       totalLikes: post.likes.length,
       users: post.likes,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -291,7 +313,6 @@ exports.getCommentsOfPost = async (req, res) => {
       totalComments: post.comments.length,
       comments: post.comments,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -301,18 +322,17 @@ exports.getCommentsOfPost = async (req, res) => {
   }
 };
 
-
 exports.getSharesOfPost = async (req, res) => {
   try {
     const postId = req.params.id;
 
-    const post = await Post.findById(postId)
-      .populate("shares", "name username profile_image"); // populate user list
+    const post = await Post.findById(postId).populate(
+      "shares",
+      "name username profile_image",
+    ); // populate user list
 
     if (!post) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Post not found" });
+      return res.status(404).json({ status: false, message: "Post not found" });
     }
 
     res.json({
@@ -320,7 +340,6 @@ exports.getSharesOfPost = async (req, res) => {
       totalShares: post.shares.length,
       users: post.shares,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: "Server error" });
@@ -351,7 +370,6 @@ exports.getPostDetail = async (req, res) => {
       isLiked,
       userId,
     });
-
   } catch (error) {
     console.error("POST DETAIL ERROR:", error);
     return res.status(500).json({
